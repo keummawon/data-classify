@@ -1,0 +1,492 @@
+<title>하루 속 데이터 분류</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 파란 헤더 밴드 → 탭 → 시나리오 카드(본문 속 데이터 박스) → 채점 바 → 결과(점수, 분류 트리, 데이터별 정답) */
+:root{
+  --bg:#f0f6ff; --surface:#ffffff; --surface-2:#f5f9ff;
+  --ink:#16315c; --muted:#5a7299; --line:#d6e5f8; --line-strong:#acc8ee;
+  --navy:#d4e6ff; --navy-2:#eaf4ff; --navy-ink:#123266; --navy-muted:#4f6d9b; --tab-bg:rgba(255,255,255,.55);
+  --blue:#2f74e0; --blue-soft:#e8f1ff; --blue-ink:#1a4fa6;
+  --sky:#1488c2; --sky-soft:#e3f4fc; --sky-ink:#0b6391;
+  --on-accent:#ffffff;
+  --ok:#12805c; --ok-soft:#e1f4ec; --bad:#c2333d; --bad-soft:#fbe7e8;
+  --shadow:0 1px 2px rgba(47,116,224,.06),0 6px 20px rgba(47,116,224,.08);
+  --f-display:"Do Hyeon","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0a1424; --surface:#101e35; --surface-2:#0d1a2e;
+  --ink:#e5edfb; --muted:#9cb0cf; --line:#223a5e; --line-strong:#38598a;
+  --navy:#14315f; --navy-2:#0f2447; --navy-ink:#f1f6ff; --navy-muted:#a9c0e8; --tab-bg:rgba(255,255,255,.12);
+  --blue:#6b9dff; --blue-soft:#17305a; --blue-ink:#a9c6ff;
+  --sky:#45bfee; --sky-soft:#0f3448; --sky-ink:#9ddcf5;
+  --on-accent:#07142a;
+  --ok:#4cc99a; --ok-soft:#0f3427; --bad:#ff7d85; --bad-soft:#3d161b;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0a1424; --surface:#101e35; --surface-2:#0d1a2e;
+  --ink:#e5edfb; --muted:#9cb0cf; --line:#223a5e; --line-strong:#38598a;
+  --navy:#14315f; --navy-2:#0f2447; --navy-ink:#f1f6ff; --navy-muted:#a9c0e8; --tab-bg:rgba(255,255,255,.12);
+  --blue:#6b9dff; --blue-soft:#17305a; --blue-ink:#a9c6ff;
+  --sky:#45bfee; --sky-soft:#0f3448; --sky-ink:#9ddcf5;
+  --on-accent:#07142a;
+  --ok:#4cc99a; --ok-soft:#0f3427; --bad:#ff7d85; --bad-soft:#3d161b;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;word-break:keep-all;overflow-wrap:anywhere}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* header */
+.hero{background:linear-gradient(170deg,var(--navy),var(--navy-2));color:var(--navy-ink);margin-top:calc(-1 * env(safe-area-inset-top,0px));padding-top:calc(env(safe-area-inset-top,0px) + 2.2rem);padding-bottom:4.2rem}
+.eyebrow{font-size:.78rem;letter-spacing:.12em;color:var(--navy-muted);font-weight:600}
+.hero h1{font-family:var(--f-display);font-weight:400;font-size:clamp(2rem,5vw,2.8rem);line-height:1.15;margin:.35rem 0 .6rem;text-wrap:balance}
+.hero p{margin:0;max-width:60ch;color:var(--navy-muted)}
+.hero p b{color:var(--navy-ink);font-weight:600}
+
+main.wrap{margin-top:-2.8rem;padding-bottom:3rem;display:grid;gap:18px}
+
+/* tabs */
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600;padding:.7rem 1.1rem;border-radius:12px 12px 0 0;background:var(--tab-bg);color:var(--navy-ink);display:flex;gap:.5rem;align-items:center}
+.tab small{font-weight:500;opacity:.8}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--blue-ink)}
+.tab:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:0 16px 16px 16px;box-shadow:var(--shadow);padding:clamp(18px,3.5vw,32px)}
+.card.plain{border-radius:16px}
+.scen-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:1rem}
+.scen-head h2{font-family:var(--f-display);font-weight:400;font-size:1.6rem;margin:0;color:var(--ink)}
+.scen-head .who{font-size:.85rem;color:var(--muted)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);align-items:center}
+.sw{display:inline-flex;align-items:center;gap:.35rem}
+.sw i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.sw .s{background:var(--blue)} .sw .u{background:var(--sky)} .sw .n{background:var(--surface);border:1.5px solid var(--line-strong)}
+
+.story{font-size:1.06rem;line-height:2.35;margin:0;max-width:72ch}
+.data{display:inline;cursor:pointer;padding:.16em .45em;border:1.5px solid var(--line-strong);border-radius:8px;background:var(--blue-soft);color:var(--ink);font-weight:600;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background .15s,border-color .15s,color .15s}
+.data:not([data-sel]):hover{border-color:var(--blue)}
+.data:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.data .n{display:inline-block;min-width:1.45em;height:1.45em;line-height:1.45em;text-align:center;border-radius:50%;background:var(--surface);color:var(--blue-ink);font-size:.72em;margin-right:.35em;vertical-align:.12em;font-variant-numeric:tabular-nums;border:1px solid var(--line-strong)}
+.data .tag{display:none;font-size:.72em;font-weight:700;margin-left:.4em;padding:.05em .4em;border-radius:5px;background:var(--surface);vertical-align:.1em}
+.data[data-sel="s"]{background:var(--blue);border-color:var(--blue);color:var(--on-accent)}
+.data[data-sel="u"]{background:var(--sky);border-color:var(--sky);color:var(--on-accent)}
+.data[data-sel="s"] .tag{display:inline;color:var(--blue-ink)}
+.data[data-sel="u"] .tag{display:inline;color:var(--sky-ink)}
+.data[data-sel] .n{border-color:transparent}
+.data .mk{display:none;font-weight:700;margin-left:.3em}
+.data[data-res="ok"] .mk,.data[data-res="bad"] .mk{display:inline}
+.data[data-res="ok"]{box-shadow:0 0 0 2.5px var(--ok)}
+.data[data-res="bad"]{box-shadow:0 0 0 2.5px var(--bad)}
+.data[data-res="ok"] .mk{color:var(--on-accent)}
+.data[data-res="bad"] .mk{color:var(--bad)}
+.data[data-res="bad"][data-sel] .mk{color:var(--on-accent)}
+.graded .data{cursor:default}
+
+/* popover */
+.pop{position:absolute;z-index:20;background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;gap:6px}
+.pop button{appearance:none;font:inherit;font-weight:700;cursor:pointer;border-radius:8px;padding:.5rem .9rem;border:1.5px solid transparent;min-width:5.5rem}
+.pop .ps{background:var(--blue-soft);color:var(--blue-ink)}
+.pop .pu{background:var(--sky-soft);color:var(--sky-ink)}
+.pop .ps[aria-pressed="true"]{background:var(--blue);color:var(--on-accent)}
+.pop .pu[aria-pressed="true"]{background:var(--sky);color:var(--on-accent)}
+.pop button:focus-visible{outline:3px solid var(--sky);outline-offset:1px}
+.pop button small{display:block;font-weight:500;font-size:.72rem;opacity:.85}
+
+/* action bar */
+.bar{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;justify-content:space-between;margin-top:1.4rem;padding-top:1.2rem;border-top:1px dashed var(--line)}
+.prog{display:flex;align-items:center;gap:10px;min-width:200px;flex:1}
+.prog .track{flex:1;max-width:220px;height:8px;border-radius:99px;background:var(--blue-soft);overflow:hidden}
+.prog .fill{height:100%;background:var(--blue);border-radius:99px;transition:width .25s}
+.prog span{font-size:.88rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{appearance:none;font:inherit;font-weight:600;cursor:pointer;border-radius:10px;padding:.6rem 1.1rem;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--blue-ink)}
+.btn:hover{border-color:var(--blue)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:var(--on-accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.hint{font-size:.82rem;color:var(--muted);width:100%;margin:0}
+
+/* results */
+.score{display:grid;grid-template-columns:auto 1fr;gap:18px 26px;align-items:center}
+.ring{width:112px;height:112px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--blue) calc(var(--p)*1%),var(--blue-soft) 0)}
+.ring div{width:86px;height:86px;border-radius:50%;background:var(--surface);display:grid;place-items:center;text-align:center;line-height:1.1}
+.ring b{font-family:var(--f-display);font-weight:400;font-size:2rem;color:var(--blue-ink);font-variant-numeric:tabular-nums}
+.ring small{font-size:.75rem;color:var(--muted)}
+.score h3{font-family:var(--f-display);font-weight:400;font-size:1.6rem;margin:0 0 .25rem}
+.score p{margin:0;color:var(--muted)}
+.mini{display:flex;gap:8px;flex-wrap:wrap;margin-top:.7rem}
+.pill{font-size:.8rem;font-weight:600;padding:.2rem .6rem;border-radius:99px}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+
+.sec-title{font-family:var(--f-display);font-weight:400;font-size:1.35rem;margin:0 0 .3rem}
+.sec-sub{margin:0 0 1rem;color:var(--muted);font-size:.9rem}
+
+/* classification tree (org chart) */
+main.wrap,#result>div{grid-template-columns:minmax(0,1fr)}
+.card{min-width:0}
+.tree-scroll{overflow-x:auto;padding-bottom:6px;max-width:100%}
+.org{min-width:820px}
+.org ul{display:flex;justify-content:center;margin:0;padding:24px 0 0;position:relative;list-style:none}
+.org>ul{padding-top:0}
+.org li{position:relative;padding:24px 5px 0;flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center}
+.org>ul>li{padding-top:0}
+.org li.g4{flex-grow:4} .org li.g15{flex-grow:1.3}
+.org li::before,.org li::after{content:"";position:absolute;top:0;right:50%;width:50%;height:24px;border-top:2px solid var(--line-strong)}
+.org li::after{right:auto;left:50%;border-left:2px solid var(--line-strong)}
+.org li:first-child::before,.org li:last-child::after{border:0}
+.org li:last-child::before{border-right:2px solid var(--line-strong);border-top-right-radius:10px}
+.org li:first-child::after{border-top-left-radius:10px}
+.org li:only-child::before,.org li:only-child::after{display:none}
+.org ul ul::before{content:"";position:absolute;top:0;left:50%;height:24px;border-left:2px solid var(--line-strong)}
+.node{border:2px solid;border-radius:10px;padding:.45rem .8rem;font-weight:700;text-align:center;line-height:1.35;max-width:250px}
+.node small{display:block;font-weight:500;font-size:.74rem;opacity:.9;margin-top:2px}
+.node.root{background:var(--navy);color:var(--navy-ink);border-color:var(--blue)}
+.node.s{background:var(--blue);color:var(--on-accent);border-color:var(--blue)}
+.node.u{background:var(--sky);color:var(--on-accent);border-color:var(--sky)}
+.node.mid{background:var(--blue-soft);color:var(--blue-ink);border-color:var(--blue)}
+.node.leaf{background:var(--surface);color:var(--blue-ink);border-color:var(--blue);width:100%;max-width:none}
+.node.leaf small{color:var(--muted)}
+.chips{display:flex;flex-direction:column;gap:5px;margin-top:8px;width:100%}
+.chip{font-size:.8rem;font-weight:600;padding:.28rem .55rem;border-radius:7px;background:var(--blue-soft);color:var(--blue-ink);text-align:left}
+.chips.u .chip{background:var(--sky-soft);color:var(--sky-ink)}
+.chip b{font-variant-numeric:tabular-nums;margin-right:.35rem;opacity:.7}
+.none{font-size:.78rem;color:var(--muted);font-style:italic;margin-top:8px}
+
+.answers{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.ans{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
+.ans .num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.85rem;font-variant-numeric:tabular-nums}
+.ans.ok .num{background:var(--ok-soft);color:var(--ok)}
+.ans.bad .num{background:var(--bad-soft);color:var(--bad)}
+.ans .top{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+.ans .top strong{font-size:1rem;margin-right:.2rem}
+.badge{font-size:.76rem;font-weight:700;padding:.15rem .55rem;border-radius:6px}
+.badge.s{background:var(--blue);color:var(--on-accent)}
+.badge.u{background:var(--sky);color:var(--on-accent)}
+.path{font-size:.76rem;font-weight:600;padding:.13rem .5rem;border-radius:6px;border:1px solid var(--line-strong);color:var(--blue-ink)}
+.ans .why{margin:.35rem 0 .25rem;font-size:.9rem;color:var(--ink)}
+.ans .mine{font-size:.8rem;color:var(--muted)}
+.ans.ok .mine b{color:var(--ok)} .ans.bad .mine b{color:var(--bad)}
+
+/* start screen */
+.intro{background:linear-gradient(170deg,var(--navy),var(--navy-2));color:var(--navy-ink);min-height:100svh;display:grid;align-items:center;margin-top:calc(-1 * env(safe-area-inset-top,0px));padding-top:calc(env(safe-area-inset-top,0px) + 2.5rem);padding-bottom:2.5rem}
+.intro .wrap{width:100%}
+.intro h1{font-family:var(--f-display);font-weight:400;font-size:clamp(2.4rem,8vw,4.4rem);line-height:1.2;margin:.6rem 0 1rem;text-wrap:balance}
+.hl{display:inline-block;padding:0 .3em;border-radius:.18em;color:var(--on-accent)}
+.hl.s{background:var(--blue)} .hl.u{background:var(--sky)}
+.intro p.lead{margin:0;max-width:52ch;color:var(--navy-muted);font-size:1.05rem}
+.start{margin-top:2rem;appearance:none;border:0;cursor:pointer;font:inherit;font-family:var(--f-display);font-size:1.5rem;padding:.75rem 2rem;border-radius:14px;background:var(--blue);color:var(--on-accent);box-shadow:0 8px 24px rgba(47,116,224,.3);transition:transform .15s}
+.start:hover{transform:translateY(-2px)}
+.start:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
+.home{appearance:none;font:inherit;font-size:.82rem;font-weight:600;cursor:pointer;background:transparent;color:var(--navy-muted);border:1px solid var(--navy-muted);border-radius:8px;padding:.25rem .7rem;margin-bottom:.8rem}
+.home:hover{color:var(--navy-ink);border-color:var(--navy-ink)}
+.home:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+
+@media (max-width:720px){
+  .tree,.mids{grid-template-columns:1fr}
+  .score{grid-template-columns:1fr;justify-items:start}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+<section class="intro" id="intro">
+  <div class="wrap">
+    <div class="eyebrow">정보 · 데이터의 종류</div>
+    <h1><span class="hl s">정형</span> 데이터<br><span class="hl u">비정형</span> 데이터 구분하기</h1>
+    <p class="lead">당산이와 금선생님의 하루를 따라가며, 이야기 속에 숨어 있는 데이터를 정형과 비정형으로 나누어 보세요.</p>
+    <button class="start" id="btn-start" type="button">시작하기 →</button>
+  </div>
+</section>
+
+<div id="app" hidden>
+<header class="hero">
+  <div class="wrap">
+    <button class="home" id="btn-home" type="button">← 처음 화면</button>
+    <div class="eyebrow">정보 · 데이터의 종류</div>
+    <h1>하루 속 데이터 분류하기</h1>
+    <p>시나리오 속 <b>파란 박스</b>를 눌러 <b>정형</b>인지 <b>비정형</b>인지 골라 보세요.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div>
+    <div class="tabs" role="tablist" aria-label="시나리오 선택">
+      <button class="tab" role="tab" id="tab-student" aria-controls="panel" aria-selected="true" data-tab="student">학생 <small>당산이의 하루</small></button>
+      <button class="tab" role="tab" id="tab-teacher" aria-controls="panel" aria-selected="false" data-tab="teacher">교사 <small>금선생님의 하루</small></button>
+    </div>
+    <section class="card" id="panel" role="tabpanel" aria-labelledby="tab-student">
+      <div class="scen-head">
+        <div>
+          <div class="who" id="who"></div>
+          <h2 id="scen-title"></h2>
+        </div>
+        <div class="legend" aria-hidden="true">
+          <span class="sw"><i class="n"></i>선택 전</span>
+          <span class="sw"><i class="s"></i>정형</span>
+          <span class="sw"><i class="u"></i>비정형</span>
+        </div>
+      </div>
+      <p class="story" id="story"></p>
+      <div class="bar">
+        <div class="prog"><div class="track"><div class="fill" id="fill"></div></div><span id="prog-text"></span></div>
+        <div class="btns">
+          <button class="btn" id="btn-reset" type="button">다시 하기</button>
+          <button class="btn" id="btn-reveal" type="button">정답 바로 보기</button>
+          <button class="btn primary" id="btn-grade" type="button">채점하기</button>
+        </div>
+        <p class="hint" id="hint"></p>
+      </div>
+    </section>
+  </div>
+
+  <section id="result" hidden>
+    <div style="display:grid;gap:18px">
+      <div class="card plain score" id="score"></div>
+      <div class="card plain">
+        <h3 class="sec-title">데이터 분류 한눈에 보기</h3>
+        <p class="sec-sub">이 시나리오의 데이터를 정답 기준으로 나누었습니다. 박스 번호는 시나리오의 번호와 같습니다.</p>
+        <div class="tree-scroll" id="tree"></div>
+      </div>
+      <div class="card plain">
+        <h3 class="sec-title">데이터별 정답과 이유</h3>
+        <p class="sec-sub">초록 번호는 맞힌 데이터, 빨간 번호는 틀렸거나 고르지 않은 데이터입니다.</p>
+        <ol class="answers" id="answers"></ol>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+
+<div class="pop" id="pop" role="dialog" aria-label="데이터 종류 선택" hidden>
+  <button type="button" class="ps" data-v="s">정형<small>표로 정리</small></button>
+  <button type="button" class="pu" data-v="u">비정형<small>글·사진·소리·영상</small></button>
+</div>
+
+<script>
+const SUB = {
+  연속형:{num:'수치형', d:'값이 끊김 없이 이어져, 일정 구간 안에 값이 무수히 많음'},
+  이산형:{num:'수치형', d:'일정 구간 안에서 하나씩 셀 수 있는 값'},
+  순서형:{num:'범주형', d:'순위나 서열이 있는 값'},
+  명목형:{num:'범주형', d:'순위나 서열이 없는 값'}
+};
+
+const SCEN = {
+  student:{
+    who:'학생 시나리오', title:'당산이의 하루',
+    text:'아침 7시, 당산이는 {1}에 겨우 눈을 떴다. 날씨 앱을 열어 보니 {2}라고 떠 있었다. “으, 춥다!” 휴대폰에는 먼저 출근한 엄마가 남긴 {3}까지 와 있었다. 당산이는 패딩을 꺼내 입으며 “따뜻하게 입어야지.” 하고 중얼거렸다. 느긋하게 아침밥을 먹고 시계를 봤더니 {4}이었다. “이런, 지각이다!” 당산이는 학교까지 전력 질주했다. 교문에 도착하자 스마트워치가 부르르 떨리며 {5}이라는 알림을 띄웠다. 아침부터 하루 운동 끝! 1교시는 정보 시간이었다. 깜짝 형성 평가에서 {6}까지 꽉꽉 채워 썼더니 {7}을 받았다. 기분이 하늘을 날 것 같아서 쉬는 시간에 친구들과 {8}를 찍었다. 그런데 점심시간, 책상 서랍 속에서 누군가 몰래 넣어 둔 {9}를 발견했다! 보낸 사람 이름은 없고 하트만 그려져 있었다. “대체 누구일까…?” 두근두근, 오후 수업 내내 반 친구들 얼굴만 살폈다. 하교 후 학원에 가는 {10} 안에서 {11}를 보며 내릴 정류장을 확인하고, 반 {12}에 “내 서랍에 편지 넣은 사람 누구야?”라고 물었다. 돌아온 답은 “ㅋㅋㅋㅋ”뿐이었다. 학원을 마치고 집에 와서는 {13}를 다시 확인했다. 시험이 코앞이다…. 하지만 저녁을 먹고 나니 손이 저절로 유튜브로 향했다. 좋아하는 {14}과 {15}을 보다 보니 시간 가는 줄 몰랐다. 잠들기 전, 스마트폰이 “{16}, 오늘의 사용 목표 시간에 도달했습니다”라는 알림을 띄웠다. 걸음 수 목표도, 스크린 타임 목표도 모두 달성한 알찬(?) 하루였다. 당산이는 화면을 끄며 생각했다. “오늘 하루도 데이터가 나를 졸졸 따라다녔구나!”',
+    items:{
+      1:{label:'스마트폰에서 울리는 알람 소리', a:'u', why:'소리(오디오)는 행과 열로 나눠 담을 수 없는 형태라 비정형 데이터입니다.'},
+      2:{label:'기온 영하 3℃', a:'s', sub:'연속형', why:'기온은 -3.4℃처럼 소수점까지 잴 수 있고 값이 끊김 없이 이어지므로 연속형입니다.'},
+      3:{label:'“패딩 꼭 입고 가!”라는 엄마의 음성 메시지', a:'u', why:'녹음된 목소리(오디오)는 표의 칸에 담을 수 없어 비정형입니다.'},
+      4:{label:'8시 30분', a:'s', sub:'연속형', why:'시각은 8시 30분 15초처럼 끊김 없이 이어지는 시간 값이라 연속형입니다.'},
+      5:{label:'목표 걸음 수 8,000보 달성', a:'s', sub:'이산형', why:'걸음 수는 1보, 2보처럼 하나씩 세는 값이라 이산형입니다. 8,000.5보는 존재하지 않습니다.'},
+      6:{label:'서술형 문제 답안', a:'u', why:'서술형 답안은 학생마다 길이와 내용이 다른 자유로운 글이라 비정형입니다. 반면 이 답안에 매긴 점수는 정형입니다.'},
+      7:{label:'점수 100점', a:'s', sub:'이산형', why:'형성 평가 점수는 1점 단위로 매겨져 셀 수 있는 값이라 이산형입니다.'},
+      8:{label:'100점 기념 단체 셀카', a:'u', why:'사진(이미지)은 행과 열로 정리된 값이 아니어서 비정형입니다.'},
+      9:{label:'연애 편지', a:'u', why:'손으로 자유롭게 쓴 글이라 정해진 칸이나 형식이 없어 비정형입니다. 두근거리는 마음은 표에 담을 수 없죠!'},
+      10:{label:'147번 버스', a:'s', sub:'명목형', why:'147은 숫자지만 버스를 구분하는 이름일 뿐, 더하거나 크기를 비교하는 의미가 없어 명목형입니다. 숫자로 되어 있어도 범주형일 수 있습니다.'},
+      11:{label:'버스 노선표', a:'s', sub:'순서형', why:'정류장이 운행 순서대로 표에 정리되어 있습니다. 정류장 사이에 순서가 있으므로 순서형입니다.'},
+      12:{label:'단톡방 메시지', a:'u', why:'글, 이모티콘, ㅋㅋㅋ가 섞인 자유로운 텍스트라 정해진 형식이 없어 비정형입니다.'},
+      13:{label:'기말고사 시험 시간표', a:'s', sub:'순서형', why:'날짜와 교시 순서에 맞춰 과목이 표의 행과 열로 정리됩니다. 1교시 → 2교시처럼 순서가 있는 범주라 순서형입니다.'},
+      14:{label:'게임 공략 영상', a:'u', why:'영상은 화면과 소리가 섞인 데이터로, 정해진 표 형식이 없어 비정형입니다.'},
+      15:{label:'가수의 직캠 영상', a:'u', why:'영상 데이터이므로 비정형입니다. 조회수나 재생 시간은 정형이지만 영상 자체는 비정형입니다.'},
+      16:{label:'스크린 타임 3시간', a:'s', sub:'연속형', why:'사용 시간은 3시간 0분 12초처럼 끊김 없이 이어지는 값이라 연속형입니다.'}
+    }
+  },
+  teacher:{
+    who:'교사 시나리오', title:'금선생님의 하루',
+    text:'오전 7시 30분, 금선생님의 휴대폰이 “띠링!” 하고 울렸다. 반 학생에게서 {1}가 와 있었다. 깜짝 놀란 금선생님은 병원에 가야 할 정도인지, 9시 전에는 올 수 있는지 답장을 보냈다. 잠시 뒤 “열을 재 봤는데 {2}예요. 화장실만 다녀오면 괜찮을 것 같아요!”라는 답이 왔다. 아침 조회 시간, 8시 59분에 숨을 헐떡이며 뛰어 들어온 그 학생 덕분에 금선생님은 출석표에 {3}을 무사히 기록했다. 1교시 정보 수업은 모둠 발표 시간이었다. 금선생님은 {4}을 핸드폰으로 동영상 촬영했는데, 한 모둠은 발표보다 박수와 리액션이 더 길었다. 점심시간에는 밥을 5분 만에 먹고 {5}를 짠 뒤, {6} 신청 결과를 정리했다. 오후에는 수행평가 채점을 마치고 학생별 {7}을 성적 처리 프로그램에 입력했다. 방과 후에는 연애 고민부터 진로 고민까지 학생들의 이야기를 들어 주고, 상담 일지에 {8}을 적었다. 연애 상담이 진로 상담보다 세 배 길었다는 건 비밀이다. 퇴근 전에는 {9}으로 지난번보다 올랐다는 것을 확인하고 살짝 미소 지었다. 저녁에 집에서 쉬고 있는데, 한 학생이 휴대폰으로 찍은 {10}을 보내왔다. 금선생님은 한숨을 쉬며 답장을 보냈다. “얘들아, 우리 학교는 독서 감상문을 사진으로 내면 안 돼! 독서 책에 써서 내야지~” 휴대폰을 내려놓으며 금선생님은 생각했다. “오늘도 데이터가 산더미구나!”',
+    items:{
+      1:{label:'“선생님, 배가 아파서 늦어요…”라는 문자 메시지', a:'u', why:'문자 메시지는 자유롭게 쓴 글(텍스트)이라 정해진 칸이 없으므로 비정형 데이터입니다.'},
+      2:{label:'체온 36.8℃', a:'s', sub:'연속형', why:'체온은 36.8℃처럼 소수점까지 잴 수 있고 값이 끊김 없이 이어지므로 연속형입니다.'},
+      3:{label:'오늘 출석 인원 27명', a:'s', sub:'이산형', why:'사람 수는 1명, 2명처럼 하나씩 세는 값이라 이산형입니다. 26.5명은 존재하지 않습니다.'},
+      4:{label:'모둠 발표 모습', a:'u', why:'핸드폰으로 촬영한 동영상은 표 형식으로 정리할 수 없어 비정형입니다.'},
+      5:{label:'청소 당번표', a:'s', sub:'명목형', why:'날짜, 이름, 청소 구역이 표의 행과 열로 정리되므로 정형입니다. 이름과 청소 구역은 순위나 서열이 없는 값이라 명목형입니다.'},
+      6:{label:'동아리(방송부, 로봇부, 독서부)', a:'s', sub:'명목형', why:'동아리 이름은 서로 구분만 할 뿐 순위나 서열이 없어 명목형입니다.'},
+      7:{label:'수행평가 성취 수준(A~E)', a:'s', sub:'순서형', why:'A가 E보다 높은 단계처럼 등급 사이에 서열이 있어 순서형입니다.'},
+      8:{label:'상담 내용', a:'u', why:'연애·진로 고민을 글로 자유롭게 적은 텍스트라 비정형입니다.'},
+      9:{label:'단원평가 반 평균 78.5점', a:'s', sub:'연속형', why:'평균은 78.5점처럼 소수점 값을 가질 수 있어 연속형입니다.'},
+      10:{label:'독서 감상문 사진', a:'u', why:'휴대폰으로 찍은 사진(이미지)이라 정해진 칸이나 형식이 없어 비정형입니다. 독서 책에 손으로 쓴 감상문도 자유롭게 쓴 글이라 비정형입니다.'}
+    }
+  }
+};
+
+const state = {};
+for (const k in SCEN) state[k] = {sel:{}, graded:false};
+let cur = 'student';
+let openId = null;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const NAME = {s:'정형', u:'비정형'};
+
+function pathOf(it){ return it.a === 's' ? `${SUB[it.sub].num} › ${it.sub}` : ''; }
+
+function renderStory(){
+  const sc = SCEN[cur], st = state[cur];
+  $('#who').textContent = sc.who;
+  $('#scen-title').textContent = sc.title;
+  $('#panel').classList.toggle('graded', st.graded);
+  $('#story').innerHTML = esc(sc.text).replace(/\{(\d+)\}/g, (_, id) => {
+    const it = sc.items[id], v = st.sel[id];
+    let res = '';
+    if (st.graded) res = v === it.a ? 'ok' : 'bad';
+    return `<span class="data" role="button" tabindex="0" data-id="${id}"${v ? ` data-sel="${v}"` : ''}${res ? ` data-res="${res}"` : ''} aria-label="${id}번 ${esc(it.label)}${v ? ', 선택: ' + NAME[v] : ', 선택 안 함'}"><span class="n">${id}</span>${esc(it.label)}<span class="tag">${v ? NAME[v] : ''}</span><span class="mk">${res === 'ok' ? '✓' : res === 'bad' ? '✗' : ''}</span></span>`;
+  });
+  renderBar();
+}
+
+function renderBar(){
+  const sc = SCEN[cur], st = state[cur];
+  const total = Object.keys(sc.items).length;
+  const done = Object.keys(st.sel).length;
+  $('#fill').style.width = (done / total * 100) + '%';
+  $('#prog-text').textContent = `선택 ${done} / ${total}`;
+  $('#btn-grade').disabled = st.graded || done < total;
+  $('#btn-reveal').disabled = st.graded;
+  $('#hint').textContent = st.graded
+    ? '채점이 끝났어요. 다시 풀려면 ‘다시 하기’를 누르세요.'
+    : done < total ? `데이터 ${total - done}개를 더 고르면 채점할 수 있어요.` : '모두 골랐어요. ‘채점하기’를 눌러 결과를 확인하세요.';
+}
+
+function renderResult(){
+  const sc = SCEN[cur], st = state[cur];
+  const box = $('#result');
+  if (!st.graded){ box.hidden = true; return; }
+  box.hidden = false;
+  const ids = Object.keys(sc.items);
+  const total = ids.length;
+  const right = ids.filter(id => st.sel[id] === sc.items[id].a).length;
+  const pct = Math.round(right / total * 100);
+  const skipped = ids.filter(id => !st.sel[id]).length;
+  const msg = right === total ? '모두 맞혔어요! 데이터 분류 전문가예요.'
+    : pct >= 70 ? '잘했어요! 틀린 데이터의 이유를 아래에서 확인해 보세요.'
+    : '정답과 이유를 읽어 본 뒤 ‘다시 하기’로 한 번 더 도전해 보세요.';
+  $('#score').innerHTML = `
+    <div class="ring" style="--p:${pct}"><div><b>${right}</b><small>/ ${total}개</small></div></div>
+    <div><h3>${total}개 중 ${right}개 맞혔어요</h3><p>${msg}</p>
+      <div class="mini"><span class="pill ok">정답 ${right}개</span><span class="pill bad">오답 ${total - right - skipped}개</span>${skipped ? `<span class="pill bad">선택 안 함 ${skipped}개</span>` : ''}</div></div>`;
+
+  const chips = (list, cls = '') => list.length
+    ? `<div class="chips ${cls}">${list.map(id => `<span class="chip"><b>${id}</b>${esc(sc.items[id].label)}</span>`).join('')}</div>`
+    : '<div class="none">이 시나리오에는 없어요</div>';
+  const bySub = s => ids.filter(id => sc.items[id].sub === s);
+  const leaf = s => `<li><div class="node leaf">${s}<small>${SUB[s].d}</small></div>${chips(bySub(s))}</li>`;
+  $('#tree').innerHTML = `<div class="org"><ul><li>
+    <div class="node root">데이터</div>
+    <ul>
+      <li class="g4"><div class="node s">정형 데이터<small>행과 열이 있는 표로 정리할 수 있음</small></div>
+        <ul>
+          <li><div class="node mid">수치형<small>숫자로 나타내며, 사칙연산을 할 수 있음</small></div>
+            <ul>${leaf('연속형')}${leaf('이산형')}</ul></li>
+          <li><div class="node mid">범주형<small>범주(종류)로 나뉘며, 사칙연산을 할 수 없음</small></div>
+            <ul>${leaf('순서형')}${leaf('명목형')}</ul></li>
+        </ul></li>
+      <li class="g15"><div class="node u">비정형 데이터<small>정해진 형식이 없는 글, 사진, 소리, 영상</small></div>${chips(ids.filter(id => sc.items[id].a === 'u'), 'u')}</li>
+    </ul></li></ul></div>`;
+
+  $('#answers').innerHTML = ids.map(id => {
+    const it = sc.items[id], v = st.sel[id], ok = v === it.a;
+    return `<li class="ans ${ok ? 'ok' : 'bad'}"><span class="num">${id}</span><div>
+      <div class="top"><strong>${esc(it.label)}</strong><span class="badge ${it.a}">${NAME[it.a]}</span>${it.a === 's' ? `<span class="path">${pathOf(it)}</span>` : ''}</div>
+      <p class="why">${esc(it.why)}</p>
+      <div class="mine">내 선택: <b>${v ? NAME[v] : '선택 안 함'} ${ok ? '✓ 정답' : '✗ 오답'}</b></div></div></li>`;
+  }).join('');
+}
+
+function render(){ closePop(); renderStory(); renderResult(); }
+
+/* start screen */
+function showApp(on){
+  $('#intro').hidden = on;
+  $('#app').hidden = !on;
+  window.scrollTo(0, 0);
+  if (on){ render(); document.querySelector('.tab[aria-selected="true"]').focus({preventScroll:true}); }
+  else { closePop(); $('#btn-start').focus({preventScroll:true}); }
+}
+$('#btn-start').addEventListener('click', () => showApp(true));
+$('#btn-home').addEventListener('click', () => showApp(false));
+
+/* popover */
+const pop = $('#pop');
+function openPop(el){
+  const id = el.dataset.id;
+  if (state[cur].graded) return;
+  openId = id;
+  const v = state[cur].sel[id];
+  pop.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+  pop.hidden = false;
+  const rects = el.getClientRects();
+  const r = rects[rects.length - 1] || el.getBoundingClientRect();
+  const w = pop.offsetWidth;
+  const left = Math.max(8, Math.min(r.left, document.documentElement.clientWidth - w - 8));
+  pop.style.left = (left + window.scrollX) + 'px';
+  pop.style.top = (r.bottom + window.scrollY + 6) + 'px';
+  pop.querySelector(v === 'u' ? '.pu' : '.ps').focus({preventScroll:true});
+}
+function closePop(refocus){
+  if (pop.hidden) return;
+  pop.hidden = true;
+  if (refocus && openId){ const el = document.querySelector(`.data[data-id="${openId}"]`); if (el) el.focus(); }
+  openId = null;
+}
+
+$('#story').addEventListener('click', e => {
+  const el = e.target.closest('.data'); if (!el) return;
+  e.stopPropagation();
+  if (openId === el.dataset.id) closePop(); else openPop(el);
+});
+$('#story').addEventListener('keydown', e => {
+  const el = e.target.closest('.data'); if (!el) return;
+  if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openPop(el); }
+});
+pop.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || !openId) return;
+  e.stopPropagation();
+  const id = openId;
+  state[cur].sel[id] = b.dataset.v;
+  closePop();
+  renderStory();
+  const el = document.querySelector(`.data[data-id="${id}"]`); if (el) el.focus({preventScroll:true});
+});
+pop.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){ e.preventDefault(); closePop(true); }
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft'){ e.preventDefault(); const bs = [...pop.querySelectorAll('button')]; bs[(bs.indexOf(document.activeElement) + 1) % 2].focus(); }
+});
+document.addEventListener('click', e => { if (!pop.contains(e.target)) closePop(); });
+window.addEventListener('resize', () => closePop());
+
+/* tabs */
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  cur = t.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', String(x === t)));
+  $('#panel').setAttribute('aria-labelledby', t.id);
+  render();
+}));
+$('.tabs').addEventListener('keydown', e => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const ts = [...document.querySelectorAll('.tab')];
+  const n = ts[(ts.indexOf(document.activeElement) + 1) % ts.length];
+  n.focus(); n.click();
+});
+
+/* actions */
+function grade(){
+  state[cur].graded = true;
+  render();
+  $('#result').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start'});
+}
+$('#btn-grade').addEventListener('click', grade);
+$('#btn-reveal').addEventListener('click', grade);
+$('#btn-reset').addEventListener('click', () => { state[cur] = {sel:{}, graded:false}; render(); });
+
+render();
+</script>
