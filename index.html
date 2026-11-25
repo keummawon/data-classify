@@ -179,8 +179,8 @@ main.wrap,#result>div{grid-template-columns:minmax(0,1fr)}
 /* start screen */
 .intro{background:linear-gradient(170deg,var(--navy),var(--navy-2));color:var(--navy-ink);min-height:100svh;display:grid;align-items:center;margin-top:calc(-1 * env(safe-area-inset-top,0px));padding-top:calc(env(safe-area-inset-top,0px) + 2.5rem);padding-bottom:2.5rem}
 .intro .wrap{width:100%}
-.intro h1{font-family:var(--f-display);font-weight:400;font-size:clamp(2.4rem,8vw,4.4rem);line-height:1.2;margin:.6rem 0 1rem;text-wrap:balance}
-.hl{display:inline-block;padding:0 .3em;border-radius:.18em;color:var(--on-accent)}
+.intro h1{font-family:var(--f-display);font-weight:400;font-size:clamp(2.4rem,8vw,4.4rem);line-height:1.5;margin:.6rem 0 1rem;text-wrap:balance}
+.hl{display:inline-block;line-height:1.15;padding:.02em .3em;border-radius:.18em;color:var(--on-accent)}
 .hl.s{background:var(--blue)} .hl.u{background:var(--sky)}
 .intro p.lead{margin:0;max-width:52ch;color:var(--navy-muted);font-size:1.05rem}
 .start{margin-top:2rem;appearance:none;border:0;cursor:pointer;font:inherit;font-family:var(--f-display);font-size:1.5rem;padding:.75rem 2rem;border-radius:14px;background:var(--blue);color:var(--on-accent);box-shadow:0 8px 24px rgba(47,116,224,.3);transition:transform .15s}
@@ -199,7 +199,7 @@ main.wrap,#result>div{grid-template-columns:minmax(0,1fr)}
 
 <section class="intro" id="intro">
   <div class="wrap">
-    <div class="eyebrow">정보 · 데이터의 종류</div>
+    <div class="eyebrow">데이터의 유형</div>
     <h1><span class="hl s">정형</span> 데이터<br><span class="hl u">비정형</span> 데이터 구분하기</h1>
     <p class="lead">당산이와 금선생님의 하루를 따라가며, 이야기 속에 숨어 있는 데이터를 정형과 비정형으로 나누어 보세요.</p>
     <button class="start" id="btn-start" type="button">시작하기 →</button>
@@ -210,7 +210,7 @@ main.wrap,#result>div{grid-template-columns:minmax(0,1fr)}
 <header class="hero">
   <div class="wrap">
     <button class="home" id="btn-home" type="button">← 처음 화면</button>
-    <div class="eyebrow">정보 · 데이터의 종류</div>
+    <div class="eyebrow">데이터의 유형</div>
     <h1>하루 속 데이터 분류하기</h1>
     <p>시나리오 속 <b>파란 박스</b>를 눌러 <b>정형</b>인지 <b>비정형</b>인지 골라 보세요.</p>
   </div>
